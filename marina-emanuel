@@ -1,0 +1,257 @@
+import { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Upload, Download, Heart } from "lucide-react";
+import JSZip from "jszip";
+
+export default function WeddingSite() {
+  const [covers, setCovers] = useState([]);
+  const [coverIndex, setCoverIndex] = useState(0);
+  const [guestPhotos, setGuestPhotos] = useState([]);
+
+  const currentCover = covers.length > 0 ? covers[coverIndex] : null;
+
+  useEffect(() => {
+    if (covers.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setCoverIndex((prev) => (prev + 1) % covers.length);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [covers]);
+
+  const handleCoverUpload = (e) => {
+    const files = Array.from(e.target.files);
+    const mapped = files.map((file) => URL.createObjectURL(file));
+    setCovers((prev) => [...prev, ...mapped]);
+  };
+
+  const handleGuestUpload = (e) => {
+    const files = Array.from(e.target.files);
+
+    const mapped = files
+      .filter((file) => file.size > 5000)
+      .map((file) => ({
+        file,
+        url: URL.createObjectURL(file),
+        name: file.name,
+      }));
+
+    setGuestPhotos((prev) => [...mapped, ...prev]);
+  };
+
+  const downloadAll = async () => {
+    if (guestPhotos.length === 0) {
+      alert("Još nema fotografija za download.");
+      return;
+    }
+
+    const zip = new JSZip();
+
+    for (let photo of guestPhotos) {
+      const blob = await fetch(photo.url).then((r) => r.blob());
+      zip.file(photo.name, blob);
+    }
+
+    const content = await zip.generateAsync({ type: "blob" });
+
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(content);
+    link.download = "marina-emanuel-svadba-fotografije.zip";
+    link.click();
+  };
+
+  return (
+    <>
+      <style>{`
+
+      @keyframes glitterMove {
+        0% {background-position:0 0,0 0,0 0}
+        50% {background-position:200px 150px,-150px 100px,120px -120px}
+        100% {background-position:400px 300px,-300px 200px,240px -240px}
+      }
+
+      @keyframes shimmer {
+        0% {background-position:-200% center}
+        100% {background-position:200% center}
+      }
+
+      `}</style>
+
+      <div className="min-h-screen bg-[#faf7f2] text-neutral-800">
+
+        {/* HERO */}
+        <div
+          className="h-[80vh] flex flex-col items-center justify-center text-center bg-cover bg-center relative overflow-hidden transition-all duration-1000"
+          style={{
+            backgroundImage: currentCover
+              ? `url(${currentCover})`
+              : "linear-gradient(rgba(255,255,255,0.8), rgba(255,255,255,0.8)), url('https://images.unsplash.com/photo-1520854221256-17451cc331bf')",
+          }}
+        >
+
+          {/* glitter layer */}
+          <div
+            className="absolute inset-0 pointer-events-none opacity-70"
+            style={{
+              backgroundImage:
+                "radial-gradient(circle at 20% 30%, rgba(255,215,160,0.9) 1px, transparent 2px), radial-gradient(circle at 70% 60%, rgba(255,215,160,0.9) 1px, transparent 2px), radial-gradient(circle at 40% 80%, rgba(255,230,190,0.9) 1px, transparent 2px)",
+              backgroundSize: "120px 120px,160px 160px,200px 200px",
+              animation: "glitterMove 14s linear infinite",
+            }}
+          />
+
+          <div className="absolute inset-0 bg-gradient-to-b from-white/60 to-[#faf7f2]"></div>
+
+          <div className="relative z-10">
+
+            <h1
+              className="text-6xl md:text-7xl font-serif tracking-wide"
+              style={{
+                background:
+                  "linear-gradient(90deg,#8c6b2f,#e5c98a,#8c6b2f)",
+                WebkitBackgroundClip: "text",
+                color: "transparent",
+                backgroundSize: "200% auto",
+                animation: "shimmer 6s linear infinite",
+              }}
+            >
+              Marina & Emanuel
+            </h1>
+
+            <div className="flex items-center justify-center gap-3 mt-5 text-[#c6a66b]">
+              <Heart size={18} />
+              <p className="text-xl tracking-wide">13.06.2026</p>
+              <Heart size={18} />
+            </div>
+
+            <div className="mt-8">
+              <label className="cursor-pointer">
+                <input
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={handleCoverUpload}
+                />
+
+                <Button className="rounded-2xl shadow-lg bg-[#c6a66b] hover:bg-[#b89657] text-white px-6 py-3">
+                  <Upload className="mr-2 h-4 w-4" /> Upload naslovnih fotografija
+                </Button>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        {/* QR SECTION */}
+        <section className="max-w-4xl mx-auto text-center py-16 px-6">
+
+          <h2 className="text-3xl font-serif text-[#8c6b2f] mb-6">
+            Podijelite fotografije sa svadbe
+          </h2>
+
+          <p className="text-neutral-600 mb-8">
+            Skenirajte QR kod i otvorite stranicu za upload fotografija.
+          </p>
+
+          <div className="flex justify-center">
+            <div className="bg-white p-6 rounded-2xl shadow-lg border border-[#e5c98a]">
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${siteUrl}`}
+                alt="QR code"
+              />
+            </div>
+          </div>
+
+        </section>
+
+        {/* UPLOAD SECTION */}
+        <section className="max-w-5xl mx-auto py-12 px-6 text-center">
+
+          <h2 className="text-4xl font-serif mb-6 text-[#8c6b2f]">
+            Podijelite svoje uspomene
+          </h2>
+
+          <p className="mb-8 text-neutral-600 max-w-xl mx-auto">
+            Fotografirajte i snimajte trenutke s našeg vjenčanja te ih
+            podijelite s nama. Galerija se automatski osvježava.
+          </p>
+
+          <label className="cursor-pointer">
+            <input
+              type="file"
+              multiple
+              className="hidden"
+              onChange={handleGuestUpload}
+            />
+
+            <Button className="rounded-2xl shadow-lg bg-[#c6a66b] hover:bg-[#b89657] text-white px-6 py-3">
+              <Upload className="mr-2 h-4 w-4" /> Upload fotografija ili videa
+            </Button>
+          </label>
+
+          <div className="mt-8">
+            <Button
+              onClick={downloadAll}
+              className="rounded-2xl border border-[#c6a66b] text-[#8c6b2f] hover:bg-[#f3eadc] px-6 py-3"
+            >
+              <Download className="mr-2 h-4 w-4" /> Download svih fotografija i videa
+            </Button>
+          </div>
+        </section>
+
+        {/* LIVE GALLERY */}
+        <section className="max-w-6xl mx-auto py-10 px-6">
+
+          <h2 className="text-4xl text-center font-serif mb-12 text-[#8c6b2f]">
+            Live galerija uspomena
+          </h2>
+
+          <div className="grid md:grid-cols-3 gap-6">
+
+            {guestPhotos.length === 0 && (
+              <div className="col-span-full text-center text-neutral-400">
+              </div>
+            )}
+
+            {guestPhotos.map((photo, i) => (
+              <Card
+                key={i}
+                className="rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition duration-300 border border-[#e5c98a]"
+              >
+                <CardContent className="p-0">
+                  <img
+                    src={photo.url}
+                    alt={photo.name}
+                    className="h-60 w-full object-cover"
+                  />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+
+        {/* VIDEO */}
+        <section className="bg-[#f6efe4] py-20">
+
+          <div className="max-w-4xl mx-auto text-center px-6">
+
+            <h2 className="text-4xl font-serif mb-6 text-[#8c6b2f]">
+              Video uspomene
+            </h2>
+
+            <div className="aspect-video bg-white rounded-2xl flex items-center justify-center shadow-inner border border-[#e5c98a]">
+              Video player
+            </div>
+          </div>
+        </section>
+
+        {/* FOOTER */}
+        <footer className="text-center py-12 text-sm text-[#8c6b2f]">
+          Marina & Emanuel • 13.06.2026.
+        </footer>
+
+      </div>
+    </>
+  );
+}
